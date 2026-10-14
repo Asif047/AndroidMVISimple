@@ -2,9 +2,11 @@ package com.asif047.myapplication.presentation.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.asif047.myapplication.config.IoDispatcher
 import com.asif047.myapplication.domain.usecase.LoginUseCase
 import com.asif047.myapplication.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +18,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val loginUseCase: LoginUseCase
+    private val loginUseCase: LoginUseCase,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginContract.State())
@@ -44,7 +47,7 @@ class LoginViewModel @Inject constructor(
 
     private fun login() {
         val currentState = _state.value
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
             when (val result = loginUseCase(currentState.username, currentState.password)) {

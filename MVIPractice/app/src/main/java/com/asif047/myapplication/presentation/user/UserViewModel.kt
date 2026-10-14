@@ -2,10 +2,12 @@ package com.asif047.myapplication.presentation.user
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.asif047.myapplication.config.IoDispatcher
 import com.asif047.myapplication.domain.repository.AuthRepository
 import com.asif047.myapplication.domain.usecase.GetUsersUseCase
 import com.asif047.myapplication.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +20,8 @@ import javax.inject.Inject
 @HiltViewModel
 class UserViewModel @Inject constructor(
     private val getUsersUseCase: GetUsersUseCase,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(UserContract.State())
@@ -43,7 +46,7 @@ class UserViewModel @Inject constructor(
     }
 
     private fun fetchUsers() {
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
 
             when (val result = getUsersUseCase()) {
@@ -73,7 +76,7 @@ class UserViewModel @Inject constructor(
     }
 
     private fun logout() {
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             authRepository.logout()
             _effect.send(UserContract.Effect.NavigateToLogin)
         }

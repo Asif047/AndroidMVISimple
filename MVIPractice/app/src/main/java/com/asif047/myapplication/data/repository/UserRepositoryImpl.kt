@@ -1,19 +1,23 @@
 package com.asif047.myapplication.data.repository
 
+import com.asif047.myapplication.config.IoDispatcher
 import com.asif047.myapplication.data.remote.UserApiService
 import com.asif047.myapplication.domain.model.User
 import com.asif047.myapplication.domain.repository.UserRepository
 import com.asif047.myapplication.util.NetworkErrorResponse
 import com.asif047.myapplication.util.Resource
 import com.google.gson.Gson
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class UserRepositoryImpl @Inject constructor(
-    private val userApiService: UserApiService
+    private val userApiService: UserApiService,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : UserRepository {
 
-    override suspend fun getUsers(): Resource<List<User>> {
-        return try {
+    override suspend fun getUsers(): Resource<List<User>> = withContext(ioDispatcher) {
+        try {
             val response = userApiService.getUsers()
             if (response.isSuccessful && response.body() != null) {
                 val domainUsers = response.body()!!.map { dto ->
